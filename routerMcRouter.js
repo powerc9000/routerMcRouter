@@ -1,78 +1,69 @@
-(function(window, undefined){
-	var routerMcRouter = rmr = (function(){
-		var routerMcRouter = function(baseUrl){
-			var that;
-			if(this === window){
+(function(window){
+	"use strict";
+	var routerMcRouter;
+
+	routerMcRouter = (function(){
+		function routerMcRouter(baseUrl){
+			if(!this){
 				return new routerMcRouter();
 			}
-			this.baseUrl = baseUrl;
-			
-			
+			this.baseUrl = baseUrl || "";
+			this.routes = [];
+			window.onpopstate = handlePop.bind(this);
 		}
-		routerMcRouter.prototype.routes = {};
+		//routerMcRouter.prototype.routes = [];
 		routerMcRouter.prototype.currentState = window.location.pathname;
 		routerMcRouter.prototype.register = function(uri, fn){
+			var keys =[], reg;
 			if(!uri || !fn){
-				throw "Both arguments must be provided"
+				throw "Both arguments must be provided";
 			}
 			if(typeof fn !== "function"){
-				throw "second argument must be a function"
+				throw "second argument must be a function";
 			}
 			if(typeof uri !== "string"){
-				throw "firs argument must be a string"
+				throw "first argument must be a string";
 			}
-			this.routes[uri] = fn;
-		}
+			reg = routeToRegexp(uri, keys);
+			this.routes.push({regExp:reg, fn:fn, keys:keys});
+		};
 		routerMcRouter.prototype.isRegistered = function(uri){
-
-			if(!uri){
-				return;
-			}
-			var newUri;
-			if(this.routes[uri]){
-				return true;
-			}
-			else{
-				newUri = uri.slice(0, uri.lastIndexOf("/"));
-				newUri = newUri + "/*";
-				if(this.routes[newUri]){
+			var match, i, len = this.routes.length;
+			for(i=0; i<len; i++){
+				match = this.routes[i].regExp.exec(uri);
+				if(match){
 					return true;
 				}
-				else{
-					return false;
-				}			
 			}
-		}
+		};
 		routerMcRouter.prototype.executeUri = function(uri, data){
-			if(!uri){
-				return;
-			}
-			if(this.routes[uri]){
-				this.routes[uri].call(this , uri, data)
-			}
-			else{
-				newUri = uri.slice(0, uri.lastIndexOf("/"));
-				newUri = newUri + "/*";
-				if(this.routes[newUri]){
-					this.routes[newUri].call(this, uri, data);
+			var len = this.routes.length,
+				i, j , match, route,
+				ky = {};
+			for(i=0; i<len; i++){
+				match = this.routes[i].regExp.exec(uri);
+				if(match){
+					route = this.routes[i];
+					break;
 				}
-				else{
-					return false;
-				}			
 			}
-		}
+			if(route){
+				for(i = 0, j = 1; i<route.keys.length; i++, j++){
+					ky[route.keys[i].name] = match[j];
+				}
+				route.fn.call(null, data, ky);
+			}
+			
+		};
 		routerMcRouter.prototype.navigate = function(uri, data){
-			var isRegistered;
 			if(!uri || typeof uri !== "string"){
-				throw "Must provide a uri to navigate to!"
+				throw "Must provide a uri to navigate to!";
 			}
 			if(this.isRegistered(uri)){
 				window.history.pushState(data, "title", uri);
-				this.executeUri(uri, data);
-				this.currentState = uri;
 			}
-		}
-		routerMcRouter.prototype.handlePop = function(e){
+		};
+		function handlePop(e){
 			var uri = e.currentTarget.location.pathname,
 				state = e.state || {};
 				state.previousUri = this.currentState;
@@ -83,13 +74,34 @@
 			else if(this.currentState === uri){
 				this.executeUri(uri, {});
 			}
+		};
+
+		function routeToRegexp(path, keys, sensitive, strict) {
+			if (path instanceof RegExp) return path;
+			if (Array.isArray(path)) path = '(' + path.join('|') + ')';
+			path = path
+				.concat(strict ? '' : '/?')
+				.replace(/\/\(/g, '(?:/')
+				.replace(/(\/)?(\.)?:(\w+)(?:(\(.*?\)))?(\?)?(\*)?/g, function(_, slash, format, key, capture, optional, star){
+					keys.push({ name: key, optional: !! optional });
+					slash = slash || '';
+					return ''
+						+ (optional ? '' : slash)
+						+ '(?:'
+						+ (optional ? slash : '')
+						+ (format || '') + (capture || (format && '([^/.]+?)' || '([^/]+?)')) + ')'
+						+ (optional || '')
+						+ (star ? '(/*)?' : '');
+				})
+				.replace(/([\/.])/g, '\\$1')
+				.replace(/\*/g, '(.*)');
+			return new RegExp('^' + path + '$', sensitive ? '' : 'i');
 		}
+		
 	
 	return routerMcRouter;
-	}())
-	window.onpopstate = function(e){
-		routerMcRouter.prototype.handlePop.call(routerMcRouter.prototype , e);
-	}
+	}());
+	
 	window.routerMcRouter = routerMcRouter;
 	window.rmr = window.routerMcRouter;
 }(window));
