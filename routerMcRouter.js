@@ -1,4 +1,4 @@
-(function(window, $, undefined){
+(function(window, undefined){
 	var routerMcRouter = rmr = (function(){
 		var routerMcRouter = function(baseUrl){
 			var that;
@@ -92,4 +92,4 @@
 	}
 	window.routerMcRouter = routerMcRouter;
 	window.rmr = window.routerMcRouter;
-}(window, jQuery));
+}(window));
