@@ -40,6 +40,7 @@
 			var len = this.routes.length,
 				i, j , match, route,
 				ky = {};
+				console.log(uri)
 			for(i=0; i<len; i++){
 				match = this.routes[i].regExp.exec(uri);
 				if(match){
@@ -61,12 +62,16 @@
 			}
 			if(this.isRegistered(uri)){
 				window.history.pushState(data, "title", uri);
+				this.executeUri(uri, data);
 			}
 		};
 		function handlePop(e){
-			var uri = e.currentTarget.location.pathname,
+			var uri = e.currentTarget.location.pathname + e.currentTarget.location.hash,
 				state = e.state || {};
 				state.previousUri = this.currentState;
+				console.log(e.currentTarget.location);
+				console.log("popstate says: " +uri);
+
 			if(this.isRegistered(uri)){
 				this.executeUri(uri, state);
 				this.currentState = uri;
@@ -95,6 +100,7 @@
 				})
 				.replace(/([\/.])/g, '\\$1')
 				.replace(/\*/g, '(.*)');
+				console.log(new RegExp('^' + path + '$', sensitive ? '' : 'i'))
 			return new RegExp('^' + path + '$', sensitive ? '' : 'i');
 		}
 		
