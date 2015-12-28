@@ -118,8 +118,8 @@
         match = this.routes[i].regExp.exec(URINoQueryString);
         if (match) {
           route = this.routes[i];
-          for (i = 0, j = 1; i < route.keys.length; i++, j++) {
-            ky[route.keys[i].name] = match[j];
+          for (var r = 0, j = 1; i < route.keys.length; i++, j++) {
+            ky[route.keys[r].name] = match[j];
           }
           route.fn.call(that, data, ky);
           DidNavigate = true;
@@ -138,7 +138,6 @@
       return DidNavigate;
     };
     routerMcRouter.prototype.navigate = function (uri, data) {
-
       if (!uri || typeof uri !== "string") {
         throw "Must provide a uri to navigate to!";
       }
@@ -180,7 +179,7 @@
 
     return routerMcRouter;
   })();
-
+  var module = module;
   if (module && module.exports) {
     module.exports = routerMcRouter;
   } else {
